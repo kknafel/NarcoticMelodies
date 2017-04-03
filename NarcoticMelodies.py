@@ -85,12 +85,12 @@ class Melody:
             scale = 'minor'
 
         for time in range(self._duration + 1):
-            for i in range(len(mood_map)):
+            for i, note in enumerate(mood_map):
                 if scale == 'minor':
-                    degrees.append(minor_map[key][mood_map[i]] + 12 * octave)
+                    degrees.append(minor_map[key][note] + 12 * octave)
                     time += 1
                 else:
-                    degrees.append(major_map[key][mood_map[i]] + 12 * octave)
+                    degrees.append(major_map[key][note] + 12 * octave)
                     time += 1
 
             # shift according to circle of fifths

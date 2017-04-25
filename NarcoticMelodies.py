@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from midiutil import MIDIFile
 import random
 import argparse
@@ -5,18 +6,19 @@ import argparse
 
 class Melody:
     """Create melody with specified name, mood (sad/energetic/creepy) and tempo using chords progression. """
+
     def __init__(self, name, mood, tempo):
         self._name = name
         self._mood = mood
         self._tempo = tempo
         self._volume = 100
-        self._duration = random.randint(5, 15)
+        self._duration = random.randint(5, 10)
         self._program = random.randint(0, 104)
         self.create_midi()
 
     def create_midi(self):
         """ Create melody and write it to file named self._name"""
-        my_midi = MIDIFile(1)
+        my_midi = MIDIFile(1, adjust_origin=True)
         # adding random program (number from 0 to 127)
         my_midi.addProgramChange(0, 0, 0, self._program)
         # adding tempo to track
@@ -25,13 +27,13 @@ class Melody:
         degrees = self.create_melody()
         i = 0
 
-        # adding notes to midi, 1/3 possibility note is going to be 0.5 beat later.
+        # adding notes to midi, 1/3 possibility note is going to be 0.5 beat earlier.
         for i, pitch in enumerate(degrees):
             if random.randrange(0, 3) != 1 or i == 0:
                 my_midi.addNote(0, 0, pitch, i, 1, self._volume)
             else:
                 my_midi.addNote(0, 0, pitch, i - 0.5, 1, self._volume)
-                i -= + 0.5
+                i -= 0.5
 
         # adding longer note at the end, so the track doesn't 'cut off' suddenly
         my_midi.addNote(0, 0, 1, i, 2, 0)
@@ -45,7 +47,7 @@ class Melody:
 
         # A B C D E F G C# F# Ab Bb Db Eb Gb
         major_map = [[9, 11, 1, 2, 4, 6, 8], [11, 1, 3, 4, 6, 8, 10], [0, 2, 4, 5, 7, 9, 11], [2, 4, 6, 7, 9, 11, 1],
-                     [4, 6, 8, 9, 11, 1, 3], [5, 7, 9, 10, 0, 2, 4], [7, 9, 11, 0, 2, 4, 6],  [1, 3, 5, 6, 8, 10, 12],
+                     [4, 6, 8, 9, 11, 1, 3], [5, 7, 9, 10, 0, 2, 4], [7, 9, 11, 0, 2, 4, 6], [1, 3, 5, 6, 8, 10, 12],
                      [6, 8, 10, 11, 1, 3, 5], [8, 10, 0, 1, 3, 5, 7], [10, 0, 2, 3, 5, 7, 9], [-1, 1, 3, 4, 6, 8, 10],
                      [1, 3, 5, 6, 8, 10, 0], [3, 5, 7, 8, 10, 0, 2], [6, 8, 10, -1, 1, 3, 5]]
         # A B C D E F G C# F# Ab Bb D# Eb G#
@@ -55,13 +57,14 @@ class Melody:
                      [3, 3, 6, 8, 10, 11, 1], [3, 5, 6, 8, 10, -1, 1], [8, 10, 11, 1, 3, 4, 6]]
 
         # circle of fifths: changing from the corresponding indexes from major to minor sounds good
+        # e.g major_circle[0]->minor_circle[0]: shift from C major to A minor
         major_circle = [2, 6, 3, 0, 4, 1, 8, 12, 9, 13, 10, 5]
         minor_circle = [0, 4, 1, 8, 7, 14, 12, 10, 5, 2, 6, 3]
 
         # the order of keys from key chords charts
         # e.g for sad in A major: major_map[0][0], major_map[0][3], major_map[0][4], major_map[0][4]
         sad_mood = [[0, 3, 4, 4], [0, 5, 3, 4], [0, 4, 5, 3], [0, 0, 3, 5], [0, 5, 1, 4], [0, 5, 2, 3]]
-        energetic_mood = [[0, 2, 3, 5], [0, 3, 4], [3, 4, 3], [0, 3, 0, 4], [3, 4, 3],  [0, 2, 5, 3], [0, 1, 2, 3, 4]]
+        energetic_mood = [[0, 2, 3, 5], [0, 3, 4], [3, 4, 3], [0, 3, 0, 4], [3, 4, 3], [0, 2, 5, 3], [0, 1, 2, 3, 4]]
         creepy_mood = [[0, 5, 3, 5], [3, 2, 3], [5, 4, 6]]
 
         # drawing octave
@@ -88,15 +91,13 @@ class Melody:
             for i, note in enumerate(mood_map):
                 if scale == 'minor':
                     degrees.append(minor_map[key][note] + 12 * octave)
-                    time += 1
                 else:
                     degrees.append(major_map[key][note] + 12 * octave)
-                    time += 1
 
             # shift according to circle of fifths
             if scale == 'minor':
                 if minor_circle.__contains__(key):
-                        key = major_circle[minor_circle.index(key)]
+                    key = major_circle[minor_circle.index(key)]
                 else:
                     key = (key + 1) % 12
                 scale = 'major'
@@ -120,7 +121,8 @@ if __name__ == '__main__':
                         default='sad')
     parser.add_argument('-t', '--tempo', type=int, required=False, help="Tempo of created melody in beats per minute "
                                                                         "(best when between 90 and 300)",
-                        default=90)
+                        default=140)
     args = vars(parser.parse_args())
 
     melody = Melody(args['name'], args['mood'], args['tempo'])
+
